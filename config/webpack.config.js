@@ -30,7 +30,6 @@ const paths = require('./paths');
 const getClientEnvironment = require('./env');
 const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
 const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
-const SftpOutputPlugin = require('../webpack-plugins/SftpOutputPlugin');
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 // @remove-on-eject-begin
 const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
@@ -102,32 +101,22 @@ module.exports = function(webpackEnv) {
           ident: 'postcss',
           plugins: () => [
             require('postcss-flexbugs-fixes'),
-            !!~process.argv.indexOf('-m') && require('postcss-px-to-viewport')({
-              viewportWidth: 750,
-              exclude: [/node_modules/]
-            }),
             require('postcss-preset-env')({
               autoprefixer: {
                 flexbox: 'no-2009',
               },
               stage: 3,
             }),
-          ].filter(Boolean),
+          ],
           sourceMap: isEnvProduction && shouldUseSourceMap,
         },
       },
     ].filter(Boolean);
     if (preProcessor) {
       loaders.push({
-        loader: require.resolve('resolve-url-loader'),
-        options: {
-          sourceMap: isEnvProduction && shouldUseSourceMap
-        }
-      });
-      loaders.push({
         loader: require.resolve(preProcessor),
         options: {
-          sourceMap: true
+          sourceMap: isEnvProduction && shouldUseSourceMap,
         },
       });
     }
@@ -146,7 +135,6 @@ module.exports = function(webpackEnv) {
     // These are the "entry points" to our application.
     // This means they will be the "root" imports that are included in JS bundle.
     entry: [
-      require.resolve('@babel/polyfill'),
       // Include an alternative client for WebpackDevServer. A client's job is to
       // connect to WebpackDevServer by a socket and get notified about changes.
       // When you save a file, the client will either apply hot updates (in case
@@ -357,7 +345,6 @@ module.exports = function(webpackEnv) {
             {
               test: /\.(js|mjs|jsx|ts|tsx)$/,
               include: paths.appSrc,
-              exclude: /node_modules/,
               loader: require.resolve('babel-loader'),
               options: {
                 customize: require.resolve(
@@ -398,12 +385,11 @@ module.exports = function(webpackEnv) {
                   [
                     require.resolve("@babel/plugin-proposal-decorators"),
                     {
-                      legacy: true
-                    }
+                      decoratorsBeforeExport: true
+                    },
                   ],
                   require.resolve("@babel/plugin-proposal-export-default-from"),
-                  require.resolve("@babel/plugin-proposal-export-namespace-from"),
-                  require.resolve("babel-plugin-add-module-exports")
+                  require.resolve("@babel/plugin-proposal-export-namespace-from")
                 ],
                 // This is a feature of `babel-loader` for webpack (not Babel itself).
                 // It enables caching results in ./node_modules/.cache/babel-loader/
@@ -538,7 +524,6 @@ module.exports = function(webpackEnv) {
       ],
     },
     plugins: [
-      new SftpOutputPlugin(),
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin(
         Object.assign(
